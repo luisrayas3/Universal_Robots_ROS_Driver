@@ -215,26 +215,29 @@ void UrDriver::startWatchdog()
     handle_program_state_(true);
 
     const std::chrono::duration<double> zero_dur = std::chrono::duration<double>::zero();
-    const std::chrono::seconds print_period = 5;
+    const std::chrono::seconds print_period{5};
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     int loops = 0;
     std::chrono::duration<double> min_dur = zero_dur, max_dur = zero_dur;
     while (reverse_interface_active_ == true)
     {
+      const std::chrono::steady_clock::time_point inner_start = std::chrono::steady_clock::now();
       std::string keepalive = readKeepalive();
+      const std::chrono::duration<double> dur = std::chrono::steady_clock::now() - inner_start;
+      ++loops;
       if (min_dur == zero_dur || dur < min_dur) {
         min_dur = dur;
       }
       if (max_dur == zero_dur || dur > max_dur) {
         max_dur = dur;
       }
-      std::chrono::stead_clock::time_point now = std::chrono::steady_clock::now();
+      std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
       std::chrono::duration<double> elapsed = now - start;
       if (elapsed >= print_period) {
         std::ostringstream out;
         out << "Read durations in the last " << elapsed.count() << "s: "
             << "max = " << max_dur.count() << "s, min = " << min_dur.count() << "s, avg = " << (elapsed / loops).count();
-        LOG_INFO(out.str().c_str());
+        LOG_INFO("%s\n", out.str().c_str());
         start = now;
         loops = 0;
         min_dur = zero_dur;
