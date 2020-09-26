@@ -33,6 +33,7 @@
 #include "ur_robot_driver/ur/ur_driver.h"
 #include "ur_robot_driver/exceptions.h"
 #include "ur_robot_driver/primary/primary_parser.h"
+#include <chrono>
 #include <memory>
 #include <sstream>
 
@@ -212,9 +213,33 @@ void UrDriver::startWatchdog()
   {
     LOG_INFO("Robot ready to receive control commands.");
     handle_program_state_(true);
+
+    const std::chrono::duration<double> zero_dur = std::chrono::duration<double>::zero();
+    const std::chrono::seconds print_period = 5;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    int loops = 0;
+    std::chrono::duration<double> min_dur = zero_dur, max_dur = zero_dur;
     while (reverse_interface_active_ == true)
     {
       std::string keepalive = readKeepalive();
+      if (min_dur == zero_dur || dur < min_dur) {
+        min_dur = dur;
+      }
+      if (max_dur == zero_dur || dur > max_dur) {
+        max_dur = dur;
+      }
+      std::chrono::stead_clock::time_point now = std::chrono::steady_clock::now();
+      std::chrono::duration<double> elapsed = now - start;
+      if (elapsed >= print_period) {
+        std::ostringstream out;
+        out << "Read durations in the last " << elapsed.count() << "s: "
+            << "max = " << max_dur.count() << "s, min = " << min_dur.count() << "s, avg = " << (elapsed / loops).count();
+        LOG_INFO(out.str().c_str());
+        start = now;
+        loops = 0;
+        min_dur = zero_dur;
+        max_dur = zero_dur;
+      }
 
       if (keepalive == std::string(""))
       {
