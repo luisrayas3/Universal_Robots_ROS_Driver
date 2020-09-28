@@ -34,7 +34,6 @@
 #include "ur_robot_driver/exceptions.h"
 #include "ur_robot_driver/primary/primary_parser.h"
 #include <chrono>
-#include <errno.h>
 #include <memory>
 #include <sstream>
 
@@ -247,7 +246,6 @@ void UrDriver::startWatchdog()
 
       if (keepalive == std::string(""))
       {
-        LOG_WARN("Errno was: %d", (errno));
         reverse_interface_active_ = false;
       }
     }

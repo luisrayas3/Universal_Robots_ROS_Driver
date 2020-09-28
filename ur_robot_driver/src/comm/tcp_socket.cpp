@@ -22,6 +22,7 @@
 
 #include <arpa/inet.h>
 #include <endian.h>
+#include <errno.h>
 #include <netinet/tcp.h>
 #include <unistd.h>
 #include <cstring>
@@ -163,6 +164,7 @@ bool TCPSocket::read(uint8_t* buf, const size_t buf_len, size_t& read)
 
   if (res == 0)
   {
+    LOG_WARN("Errno was: %d", (errno));
     state_ = SocketState::Disconnected;
     return false;
   }
