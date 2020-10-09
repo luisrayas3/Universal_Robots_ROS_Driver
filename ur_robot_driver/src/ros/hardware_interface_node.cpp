@@ -141,6 +141,7 @@ int main(int argc, char** argv)
     period.fromSec(std::chrono::duration_cast<std::chrono::duration<double>>(stopwatch_now - stopwatch_last).count());
     stopwatch_last = stopwatch_now;
 
+    period.fromSec(0.008);
     cm.update(timestamp, period, g_hw_interface->shouldResetControllers());
 
     g_hw_interface->write(timestamp, period);
