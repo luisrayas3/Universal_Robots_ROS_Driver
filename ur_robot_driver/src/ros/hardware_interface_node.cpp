@@ -144,11 +144,12 @@ int main(int argc, char** argv)
     cm.update(timestamp, period, g_hw_interface->shouldResetControllers());
 
     g_hw_interface->write(timestamp, period);
+
     // if (!control_rate.sleep())
     if (period.toSec() > expected_cycle_time)
     {
-      // ROS_WARN_STREAM("Could not keep cycle rate of " << expected_cycle_time * 1000 << "ms");
-      // ROS_WARN_STREAM("Actual cycle time:" << period.toNSec() / 1000000.0 << "ms");
+      ROS_WARN_STREAM("Could not keep cycle rate of " << expected_cycle_time * 1000 << "ms");
+      ROS_WARN_STREAM("Actual cycle time:" << period.toNSec() / 1000000.0 << "ms");
     }
   }
 
