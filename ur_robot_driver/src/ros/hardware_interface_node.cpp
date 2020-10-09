@@ -129,6 +129,15 @@ int main(int argc, char** argv)
 
   double expected_cycle_time = 1.0 / (static_cast<double>(g_hw_interface->getControlFrequency()));
 
+  ros::Duration min_period = ros::Duration(0);
+  ros::Duration max_period = ros::Duration(0);
+  ros::Duration period_totals = ros::Duration(0);
+  long debug_loops = 0;
+
+  // Debug timing printout every 5 seconds
+  const std::chrono::seconds debug_timing_period{5};
+  std::chrono::steady_clock::time_point debug_timing_start = std::chrono::steady_clock::now();
+
   // Run as fast as possible
   while (ros::ok())
   {
@@ -145,7 +154,29 @@ int main(int argc, char** argv)
 
     g_hw_interface->write(timestamp, period);
 
-    // if (!control_rate.sleep())
+    if (min_period.isZero() || period < min_period) min_period = period;
+    if (max_period.isZero() || period > max_period) max_period = period;
+    period_totals += period;
+    ++debug_loops;
+
+    // Check if it's time to print
+    const std::chrono::steady_clock::time_point debug_timing_now = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> total_elapsed = debug_timing_now - debug_timing_start;
+    if (total_elapsed > debug_timing_period) {
+      ROS_INFO_STREAM(
+          "Loop durations last " << total_elapsed.count() << "s: "
+          "min=" << min_period.toSec() * 1000.0 << "ms, "
+          "max=" << max_period.toSec() * 1000.0 << "ms, "
+          "avg=" << period_totals.toSec() * 1000.0 / debug_loops << "ms, "
+          "avgchrono=" << total_elapsed.count() * 1000.0 / debug_loops << "ms"
+      );
+      min_period = ros::Duration(0);
+      max_period = ros::Duration(0);
+      period_totals = ros::Duration(0);
+      debug_loops = 0;
+      debug_timing_start = debug_timing_now;
+    }
+
     if (period.toSec() > expected_cycle_time)
     {
       ROS_WARN_STREAM("Could not keep cycle rate of " << expected_cycle_time * 1000 << "ms");
