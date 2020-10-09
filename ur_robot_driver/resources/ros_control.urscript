@@ -77,6 +77,23 @@ thread servoThread():
   stopj(4.0)
 end
 
+thread debugExtrapolate():
+  print_loops = 125
+  loop_count = 0
+  while control_mode != MODE_STOPPED:
+    if loop_count >= print_loops:
+      enter_critical
+      extrapolate_max = extrapolate_max_count
+      extrapolate_max_count = 0
+      exit_critical
+      loop_count = 0
+      textmsg("extrapolate_max_count: ", extrapolate_max)
+    end
+    sync()
+    loop_count = loop_count + 1
+  end
+end
+
 # Helpers for speed control
 def set_speed(qd):
   cmd_servo_qd = qd
@@ -95,6 +112,7 @@ end
 
 socket_open("{{SERVER_IP_REPLACE}}", {{SERVER_PORT_REPLACE}}, "reverse_socket")
 
+debug_thread = run debugExtrapolate()
 control_mode = MODE_UNINITIALIZED
 thread_move = 0
 global keepalive = -2
@@ -132,5 +150,6 @@ end
 textmsg("ExternalControl: Stopping communication and control")
 control_mode = MODE_STOPPED
 join thread_move
+join debug_thread
 textmsg("ExternalControl: All threads ended")
 socket_close("reverse_socket")
